@@ -1,0 +1,20 @@
+# requirements.txt
+Flask
+
+# Procfile (for a compatible platform that uses Procfile)
+web: gunicorn app:app
+
+# Install deployment dependencies locally
+pip install Flask gunicorn
+
+# Test the production server command locally
+gunicorn app:app
+
+# Before deployment:
+# 1. Push the project to GitHub.
+# 2. Create a new Web Service on the hosting platform.
+# 3. Connect the GitHub repository.
+# 4. Set the build command: pip install -r requirements.txt
+# 5. Set the start command: gunicorn app:app
+# 6. Configure required environment variables.
+# 7. Deploy and open the generated public URL.
