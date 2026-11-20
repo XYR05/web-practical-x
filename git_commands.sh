@@ -18,7 +18,7 @@ git add .
 git commit -m "Add feature update"
 
 # 7. Return to the main branch and merge the feature branch
-git switch main
+git switch mains 
 git merge feature-update
 
 # 8. Connect the local repository to the GitHub repository
