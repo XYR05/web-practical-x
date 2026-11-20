@@ -65,6 +65,7 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
+setup()
 if __name__ == "__main__":
-    setup()
+
     app.run(debug=True)
