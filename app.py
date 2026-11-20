@@ -1,32 +1,70 @@
-from flask import Flask, render_template, request
+import sqlite3
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 
 app = Flask(__name__)
+app.secret_key = "replace-this-with-a-long-random-secret"
+DATABASE = "secure_demo.db"
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+def connect_db():
+    db = sqlite3.connect(DATABASE)
+    db.row_factory = sqlite3.Row
+    return db
 
-@app.route("/about")
-def about():
-    return render_template("about.html")
+def setup():
+    with connect_db() as db:
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+        """)
+        # Demonstration account only; use password hashing in real applications.
+        db.execute(
+            "INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)",
+            ("student", "LabPass123")
+        )
 
-@app.route("/result", methods=["POST"])
-def result():
-    name = request.form.get("name", "").strip()
-    marks_text = request.form.get("marks", "").strip()
+@app.route("/", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        with connect_db() as db:
+            user = db.execute(
+                "SELECT id, username FROM users WHERE username=? AND password=?",
+                (username, password)
+            ).fetchone()
+        if user:
+            session.clear()
+            session["user_id"] = user["id"]
+            session["username"] = user["username"]
+            return redirect(url_for("dashboard"))
+        flash("Invalid username or password.")
+    return render_template("login.html")
 
-    if not name or not marks_text:
-        return render_template("result.html", error="All fields are required.")
+@app.route("/dashboard", methods=["GET", "POST"])
+def dashboard():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
 
-    try:
-        marks = float(marks_text)
-        if marks < 0 or marks > 100:
-            raise ValueError
-    except ValueError:
-        return render_template("result.html", error="Enter marks between 0 and 100.")
+    if request.method == "POST":
+        comment = request.form.get("comment", "").strip()
+        if not comment or len(comment) > 200:
+            flash("Enter a comment of 1 to 200 characters.")
+        else:
+            # Parameterised query prevents input from becoming SQL syntax.
+            with connect_db() as db:
+                db.execute("INSERT INTO users (username, password) VALUES (?, ?)",
+                           ("comment_" + str(session["user_id"]), comment))
+            flash("Input accepted and stored as data.")
+    return render_template("dashboard.html", username=session["username"])
 
-    status = "Pass" if marks >= 40 else "Needs Improvement"
-    return render_template("result.html", name=name, marks=marks, status=status)
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 if __name__ == "__main__":
+    setup()
     app.run(debug=True)
