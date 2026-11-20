@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Dashboard</title></head>
+<body>
+    <h1>Welcome, {{ username }}</h1>
+    <p>You are logged in using a Flask session.</p>
+    {% with messages = get_flashed_messages() %}
+      {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    {% endwith %}
+    <h2>Safe Input Demonstration</h2>
+    <form method="post">
+        <label for="comment">Enter text:</label>
+        <input id="comment" name="comment" maxlength="200" required>
+        <button type="submit">Submit</button>
+    </form>
+    <a href="/logout">Logout</a>
+</body>
+</html>
